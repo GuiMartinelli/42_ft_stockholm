@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  alice:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alice
+    networks:
+      - docker-network
+
+  bob:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bob
+    networks:
+      - docker-network
+
+  carl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: carl
+    networks:
+      - docker-network
+
+  doug:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: doug
+    networks:
+      - docker-network
+
+networks:
+  docker-network:
