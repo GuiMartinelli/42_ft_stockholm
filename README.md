@@ -27,14 +27,14 @@ Yes, this malware only encrypts files inside the `~/infection/` directory, limit
 <br/><br/>
 
 ### USAGE
-- Clone the repository `git clone`
-- Generate a 1024 RSA Key Par here in the [RSA Key Generator](https://cryptotools.net/rsagen). Assing the PUBLIC_KEY global variable in the `stockholm`.py file with your generated Public Key and copy your Private Key inside the `pk.txt` file.
-- Start up the Container with `make` command (make sure you have Make and Docker installed).
-- Once the container is running, it will have the malware and the ~/infection/ directory inside. Access the container's terminal: `docker exec -it <mycontainer> sh`
-- You can view the available flags and usage manual by running: `python3 stockholm.py -h`.
-- Run the malware with: `python3 stockholm.py`.
+- Clone the repository ```git clone```
+- Generate a 1024 RSA Key Par here in the [RSA Key Generator](https://cryptotools.net/rsagen). Assing the PUBLIC_KEY global variable in the `stockholm.py` file with your generated Public Key and store your Private Key (If you lose it, your encrypted files can never be recovered.).
+- Start up the Container with ```make``` command (make sure you have Make and Docker installed).
+- Once the container is running, it will have the malware and the ~/infection/ directory inside. Access the container's terminal: ```docker exec -it <mycontainer> sh```
+- You can view the available flags and usage manual by running: ```python3 stockholm.py -h```.
+- Run the malware with: ```python3 stockholm.py```.
 - This will encrypt all files in the ~/infection/ directory and change their extensions to .ft. The directory will also contain a file with the encrypted AES symmetric key.
-- To restore your files, run `python3 stockholm.py -r "$(cat pk.txt)"`.
+- To restore your files, run ```python3 stockholm.py -r <private_key>```. You can store your Private Key in a text file and run ```python3 stockholm.py -r "$(cat <file>)"``` for example.
 <br/><br/>
 
 
