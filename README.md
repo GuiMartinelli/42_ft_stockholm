@@ -28,7 +28,7 @@ Yes, this malware only encrypts files inside the `~/infection/` directory, limit
 
 ### USAGE
 - Clone the repository ```git clone```
-- Generate a 1024 RSA Key Par here in the [RSA Key Generator](https://cryptotools.net/rsagen). Assing the PUBLIC_KEY global variable in the `stockholm.py` file with your generated Public Key and store your Private Key (If you lose it, your encrypted files can never be recovered.).
+- Generate a 1024 RSA Key Par in the [RSA Key Generator](https://cryptotools.net/rsagen). Assing the PUBLIC_KEY global variable in the `stockholm.py` file with your generated Public Key and store your Private Key (If you lose it, your encrypted files can never be recovered.).
 - Start up the Container with ```make``` command (make sure you have Make and Docker installed).
 - Once the container is running, it will have the malware and the ~/infection/ directory inside. Access the container's terminal: ```docker exec -it <mycontainer> sh```
 - You can view the available flags and usage manual by running: ```python3 stockholm.py -h```.
