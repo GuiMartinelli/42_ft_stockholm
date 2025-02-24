@@ -19,7 +19,7 @@ Ransomware is a type of malware that **encrypts the victim's data** and demands 
 ### How Does Ransomware Encrypt Your Data?
 Modern ransomware uses a **hybrid encryption** approach. It generates a **symmetric key** to encrypt the victim's files, and then stores this key encrypted with a **public asymmetric encryption algorithm**. The attackers retain control of the **private key**, which is used to decrypt the symmetric key and, ultimately, the files.
 This hybrid encryption method makes it extremely difficult to recover the key through other means, leaving **negotiation with hackers** as the only alternative for victims.  
-In this program, we use this same hybrid encryption approach, utilizing **AES-CBC** for file encryption and **RSA** for encrypting the AES key.
+In this program, i used this same hybrid encryption approach, utilizing **AES-CBC** for file encryption and **RSA** for encrypting the AES key.
 <br/><br/>
 
 ### IT IS SAFE TO TEST THIS PROJECT?
