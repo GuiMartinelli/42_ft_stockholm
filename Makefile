@@ -6,7 +6,7 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:23 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/19 15:08:28 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/24 17:38:03 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,8 @@ DOCKER_FLAGS = up -d --build
 DOCKER_STOP = down
 DOCKER_IMAGES = image prune -a
 DOCKER_SYSTEM = system prune -f
+
+all: docker
 
 docker:
 	$(COMPOSE) $(DOCKER-COMPOSE) $(DOCKER_FLAGS)
