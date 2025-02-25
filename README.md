@@ -26,7 +26,7 @@ In this program, i used this same hybrid encryption approach, utilizing **AES-CB
 Yes, this malware only encrypts files inside the `~/infection/` directory, limiting its potential damage. However, **I strongly recommend** that this project be tested **only within the Docker container** to ensure a controlled environment. Do not modify the directory or security settings, as doing so may expose your system to unintended risks.
 <br/><br/>
 
-### USAGE
+### Usage
 - Clone the repository ```git clone```
 - Generate a 1024 RSA Key Par in the [RSA Key Generator](https://cryptotools.net/rsagen). Assing the PUBLIC_KEY global variable in the `stockholm.py` file with your generated Public Key and store your Private Key (If you lose it, your encrypted files can never be recovered.).
 - Start up the Container with ```make``` command (make sure you have Make and Docker installed).
@@ -38,7 +38,7 @@ Yes, this malware only encrypts files inside the `~/infection/` directory, limit
 <br/><br/>
 
 
-### RESOURCES
+### Resources
 [Wana Decrypt0r (Wanacry Ransomware) - Computerphile](https://www.youtube.com/watch?v=88jkB1V6N9w&t=448s&pp=ygUWd2FubmFjcnkgY29tcHV0ZXJwaGlsZQ%3D%3D)<br/>
 [How WanaCrypt Encrypts Your Files - Computerphile](https://www.youtube.com/watch?v=pLluFxHrc30&ab_channel=Computerphile)<br/>
 [AES Encryption & Decryption In Python: Implementation, Modes & Key Management](https://onboardbase.com/blog/aes-encryption-decryption/)<br/>
