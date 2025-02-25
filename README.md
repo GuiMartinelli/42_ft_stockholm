@@ -22,7 +22,7 @@ This hybrid encryption method makes it extremely difficult to recover the key th
 In this program, i used this same hybrid encryption approach, utilizing **AES-CBC** for file encryption and **RSA** for encrypting the AES key.
 <br/><br/>
 
-### IT IS SAFE TO TEST THIS PROJECT?
+### Is it safe to test this project?
 Yes, this malware only encrypts files inside the `~/infection/` directory, limiting its potential damage. However, **I strongly recommend** that this project be tested **only within the Docker container** to ensure a controlled environment. Do not modify the directory or security settings, as doing so may expose your system to unintended risks.
 <br/><br/>
 
